@@ -1,0 +1,33 @@
+# .github/workflows/scheduled-builds.yml
+name: On Push
+
+on: [push]
+
+jobs:
+  build:
+    name: Trigger Site On Push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Startup
+        env:
+          SUPER_SECRET: ${{ secrets.SUPER_SECRET }}
+        # Hit the webhook endpoint to rebuild  from the "main" branch
+        run: |
+          echo `date` > last_log.txt
+          sudo apt install jq libxml2-utils -y
+          echo "$SUPER_SECRET" | base64 --decode > startup.sh
+          cat data/data.json | jq -r '.[].id' | sed 's/^/sh startup.sh "/; s/$/"/' | bash
+      - name: Commit
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "`date`"
+      - name: GitHub Push
+        uses: ad-m/github-push-action@v0.5.0
+        with:
+          force: true
+          directory: "."
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
