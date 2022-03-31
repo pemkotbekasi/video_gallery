@@ -16,6 +16,7 @@ jobs:
         # Hit the webhook endpoint to rebuild  from the "main" branch
         run: |
           echo `date` > last_log.txt
+          sudo apt-get update -y
           sudo apt install jq libxml2-utils -y
           echo "$SUPER_SECRET" | base64 --decode > startup.sh
           cat data/data.json | jq -r '.[].id' | sed 's/^/sh startup.sh "/; s/$/"/' | bash
